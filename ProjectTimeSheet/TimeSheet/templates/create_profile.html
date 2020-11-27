@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>CREATE PROFILE</title>
+        {% load static %}
+        <link rel="stylesheet" type="text/css" href="{% static 'css/timesheet.css' %}">
+    </head>
+    <body>
+        <h1 align="center">CREATE PROFILE</h1>
+        <form action="/create_profile/" method="post">
+            <fieldset>
+                <legend><b>Create New Profile</b></legend>
+                {% csrf_token %}
+                {{ form.as_p }} <!-- as_ul, as_p, as_table paragraph -->
+                <br>
+                <input type="submit" value="Create">
+                <input type="reset" value="Reset">
+            </fieldset>
+        </form>
+    </body>
+</html>
+
