@@ -2,31 +2,32 @@
 
 {% block content %}
 <fieldset>
-<legend><b>TimeSheet Login</b></legend>
-  {% if form.errors %}
-    <p style="color: red">Invalid Username or Password. Please try again.</p>
-  {% endif %}
-  <!--
-  <form action="/validate_credentials/" method="post">
-  -->
-  <form action="/home/" method="post">
-    {% csrf_token %}
-    <input type="hidden" name="next" value="{{ next }}" />
-    {% for field in form %}
-      <p>
-        {{ field.label_tag }}<br>
-        {{ field }}<br>
-        {% for error in field.errors %}
-          <p style="color: red">{{ error }}</p>
-        {% endfor %}
-        {% if field.help_text %}
-          <p><small style="color: green">{{ field.help_text }}</small></p>
+    {% if login_msg %}
+        {{login_msg}}
+    {% else %}
+        <legend><b>TimeSheet Login</b></legend>
+        {% if form.errors %}
+            <p style="color: red">Invalid Username or Password. Please try again.</p>
         {% endif %}
-      </p>
-    {% endfor %}
-    <button type="submit" class="btn btn-primary">Login</button>
-    <button type="reset" class="btn btn-secondary">Reset</button>
-  </form>
+        <form action="/home/" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="next" value="{{ next }}" />
+            {% for field in form %}
+                <p>
+                    {{ field.label_tag }}<br>
+                    {{ field }}<br>
+                    {% for error in field.errors %}
+                        <p style="color: red">{{ error }}</p>
+                    {% endfor %}
+                    {% if field.help_text %}
+                        <p><small style="color: green">{{ field.help_text }}</small></p>
+                    {% endif %}
+                </p>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Login</button>
+            <button type="reset" class="btn btn-secondary">Reset</button>
+        </form>
+    {% endif %}
 </fieldset>
 {% endblock %}
 

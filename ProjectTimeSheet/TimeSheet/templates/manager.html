@@ -1,21 +1,21 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<fieldset>
-    <form action="/manager_actions/" method="post">
-        <button type="input" value="dashboard" name="dashboard" class="btn btn-secondary">DASHBOARD</button>
-        <button type="input" value="reports" name="reports" class="btn btn-secondary">REPORTS</button>
-        <button type="input" value="projects" name="projects" class="btn btn-secondary">PROJECTS</button>
-        <button type="input" value="teams" name="teams" class="btn btn-secondary">TEAMS</button>
-        <button type="input" value="clients" name="clients" class="btn btn-secondary">CLIENTS</button>
-        <button type="input" value="settings" name="settings" class="btn btn-secondary">SETTINGS</button>
-        <input name="search_project" placeholder="Search Projects">
-        <input type="submit" value="Go">
-        <input type="reset" value="Clear">
-    </form>
-    <br>
-    {{iframe_src}}
-    <iframe src="{{iframe_src}}" height="100%" width="100%"></iframe>
-</fieldset>
+    <h2>Welcome, {{ user.username }}!</h2>
+    <fieldset>
+        <form action="/manager/" method="post">
+            <button type="input" value="dashboard.html" name="iframe_src" class="btn btn-secondary">DASHBOARD</button>
+            <button type="input" value="reports.html" name="iframe_src" class="btn btn-secondary">REPORTS</button>
+            <button type="input" value="projects.html" name="iframe_src" class="btn btn-secondary">PROJECTS</button>
+            <button type="input" value="teams.html" name="iframe_src" class="btn btn-secondary">TEAMS</button>
+            <button type="input" value="clients.html" name="iframe_src" class="btn btn-secondary">CLIENTS</button>
+            <button type="input" value="settings.html" name="iframe_src" class="btn btn-secondary">SETTINGS</button>
+            <input name="search_project" placeholder="Search Projects">
+            <input type="submit" value="Go">
+            <input type="reset" value="Clear">
+        </form>
+        <br>
+        <iframe src="{{iframe_src}}" height="800" width="100%"></iframe>
+    </fieldset>
 {% endblock %}
 

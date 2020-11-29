@@ -1,21 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <!-- 
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        -->
-        <meta name="viewport">
-        <meta charset="UTF-8">
-        <title>TIMESHEET - EMPLOYEE</title>
-        {% load static %}
-        <link rel="stylesheet" type="text/css" href="{% static 'css/timesheet.css' %}">
-    </head>
-    <body>
-        <img src="{% static 'images/timesheet.png' %}">
-        <h1 align="center">TIMESHEET - EMPLOYEE</h1>
+{% extends 'base.html' %}
+
+{% block content %}
+    <fieldset>
+        <h2>Welcome, {{ user.username }}!</h2>
         <form action="/employee/" method="post">
             <button type="button" class="btn btn-secondary">TIMESHEET</button>
         </form>
-    </body>
-</html>
+    </fieldset>
+{% endblock %}
 
