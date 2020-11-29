@@ -12,6 +12,13 @@ class Credentials(models.Model) :
         db_table = "Credentials"
 
 
+class Teams(models.Model) :
+    """Create a model for storing team names."""
+    team_name = models.CharField(max_length=10)
+    #members = models.ListCharField()   ## Not working.
+    #member_cost = models.   ## A dict having member : cost relationship.
+
+
 #class EmployeeProfile(models.Model) :
 #    username = models.CharField(max_length=10)
 #    name = models.CharField(max_length=30)
