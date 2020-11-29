@@ -16,18 +16,18 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from TimeSheet.views import home, manager, employee, manager_actions, employee_actions, dashboard, signup
+from TimeSheet.views import home, signup, manager, employee, dashboard, teams
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('home/', home, name="home"),
-    path('manager/', manager),
-    path('manager_actions/', manager_actions),
-    path('employee/', employee),
-    path('employee_actions/', employee_actions),
-    path('manager/dashboard.html', dashboard),
     path('login/', auth_views.LoginView.as_view(), {'template_name': 'login.html'}, name='login'),
     path('logout/', auth_views.LogoutView.as_view(), {'next_page': 'login'}, name='logout'),
     path('signup/', signup, name='signup'),
+    path('manager/', manager),
+    path('employee/', employee),
+    path('manager/dashboard.html', dashboard),
+    path('manager/teams.html', teams),
+    path('teams/', teams),
 ]
 
