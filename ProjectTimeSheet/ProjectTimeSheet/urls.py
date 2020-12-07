@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from TimeSheet.views import home, signup, manager, employee, dashboard, teams
+from TimeSheet.views import home, signup, manager, employee, dashboard, teams, timesheet, timesheets
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -25,9 +25,11 @@ urlpatterns = [
     path('logout/', auth_views.LogoutView.as_view(), {'next_page': 'login'}, name='logout'),
     path('signup/', signup, name='signup'),
     path('manager/', manager),
-    path('employee/', employee),
+    path('employee/', employee, name="employee"),
     path('manager/dashboard.html', dashboard),
+    path('manager/timesheets.html', timesheets, name="timesheets"),
     path('manager/teams.html', teams),
     path('teams/', teams),
+    path('timesheet/', timesheet, name="timesheet"),
 ]
 
