@@ -2,33 +2,34 @@ from django.db import models
 
 ## Create your models here.
 
-class Credentials(models.Model) :
-    """Table with login credentials for every employee.
+class CredentialsModel(models.Model) :
+    """Table with login credentials & details for every employee.
     """
-    username = models.CharField(max_length=10)
-    password = models.CharField(max_length=10)
+    username = models.CharField(max_length=30)
+    password = models.CharField(max_length=30)
+    firstname = models.CharField(max_length=30)
+    lastname = models.CharField(max_length=30)
+    email = models.EmailField(max_length=30)
+    team = models.CharField(max_length=30)
+    employee_id = models.IntegerField()
+    employee_ctc = models.IntegerField()
     privilege = models.CharField(max_length=10, choices = [ ("manager", "Manager"), ("employee", "Employee") ], default = "employee")
     class Meta :
-        db_table = "Credentials"
+        db_table = "CredentialsModel"
 
 
-class Teams(models.Model) :
-    """Create a model for storing team names."""
-    team_name = models.CharField(max_length=10)
-    #members = models.ListCharField()   ## Not working.
-    #member_cost = models.   ## A dict having member : cost relationship.
+class TeamModel(models.Model) :
+    """Create a model for storing Team names."""
+    teams = models.JSONField()
 
 
-#class EmployeeProfile(models.Model) :
-#    username = models.CharField(max_length=10)
-#    name = models.CharField(max_length=30)
-#    password = models.CharField(default="login123", max_length=10)
-#    email = models.EmailField(max_length=30)
-#    team = models.CharField(max_length=30)
-#    project = models.TextField()
-#    privilege = models.CharField(max_length=10, choices = [ ("manager", "Manager"), ("employee", "Employee") ], default = "employee")
-#    class Meta :
-#        db_table = "EmployeeProfile"
+class ProjectModel(models.Model) :
+    """Create a model for storing Project names."""
+    projects = models.JSONField()
 
+
+class TimeSheetModel(models.Model) :
+    """Create a model for storing TimeSheets."""
+    timesheet = models.JSONField()
 
 

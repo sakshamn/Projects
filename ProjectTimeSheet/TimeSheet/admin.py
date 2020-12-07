@@ -1,10 +1,10 @@
 from django.contrib import admin
-from TimeSheet.models import Credentials
+from TimeSheet.models import CredentialsModel
 
 ## Register your models here.
 
-## Register admin with the Credentials table.
-#admin.site.register(Credentials)
+## Register admin with the CredentialsModel table.
+#admin.site.register(CredentialsModel)
 
 class CredentialsAdmin(admin.ModelAdmin) :
     """Class to make customisations to the admin website.
@@ -16,6 +16,6 @@ class CredentialsAdmin(admin.ModelAdmin) :
     list_filter = ("privilege",)
 
 
-## Register class CredentialsAdmin with table Credentials.
-admin.site.register(Credentials, CredentialsAdmin)
+## Register class CredentialsAdmin with table CredentialsModel.
+admin.site.register(CredentialsModel, CredentialsAdmin)
 
