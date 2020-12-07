@@ -4,6 +4,7 @@ from urllib.parse import urlencode
 
 ## We need to set xframe_options_sameorigin decorator to prevent clickjacking.
 ## Clickjacking prevents loading of iframe sources by default for security.
+## We use the below decorator to tell that this source view is safe to load in an iframe.
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from django.contrib.auth.decorators import login_required
@@ -102,7 +103,6 @@ def employee(request) :
 
     if (timesheet_date := request.POST.get("mydate")) is None :
         timesheet_date = TODAY
-        timesheet_date = "05/12/2020"
     print(timesheet_date)
 
     if (data := request.POST.get("data")) is None :
@@ -118,36 +118,35 @@ def employee(request) :
     print("edit_btn", edit_btn)
     print("delete_btn", delete_btn)
 
-    employee_timesheet_dict = employee_timesheet(request)
+    employee_id = 1
+    project = ""
+
+    employee_timesheet_dict = employee_timesheet(request, employee_id, project, timesheet_date)
 
     timesheet_record = TimeSheetModel.objects.all()
-
-    employee_timesheet_dict["project_activity"] = []
+    username = request.POST.get("username")
+    employee_timesheet_dict["projects"] = []
     if len(timesheet_record) > 0 :
         for record in timesheet_record :
-            if record.timesheet["timesheet_date"] == timesheet_date and record.timesheet["username"] == request.POST.get("username") :
+            pass
+            #if record.timesheet["timesheet_date"] == timesheet_date and record.timesheet["username"] == request.POST.get("username") :
+            #if record.timesheet["timesheet_date"] == timesheet_date :
                 ## Append all projects for the particular date & employee id
-                employee_timesheet_dict["project_activity"].append(record.timesheet["project_activity"])
+                #employee_timesheet_dict["projects"].append(record.timesheet["project"])
 
     return render(request, "employee/employee.html", employee_timesheet_dict)
 
 
 @xframe_options_sameorigin
 def dashboard(request) :
-    """We need to set xframe_options_sameorigin decorator to prevent clickjacking.
-
-    Clickjacking prevents loading of iframe sources by default for security.
-    We use the decorator to tell that this source view is safe to load in an iframe.
+    """
     """
     return render(request, "manager/dashboard.html")
 
 
 @xframe_options_sameorigin
 def timesheets(request) :
-    """We need to set xframe_options_sameorigin decorator to prevent clickjacking.
-
-    Clickjacking prevents loading of iframe sources by default for security.
-    We use the decorator to tell that this source view is safe to load in an iframe.
+    """
     """
     return render(request, "manager/timesheets.html")
 
@@ -195,13 +194,11 @@ def timesheet(request):
         form = TimeSheetForm(request.POST)
         if form.is_valid():
             employee_id = form.cleaned_data.get("employee_id")
-            timesheet_date = form.cleaned_data.get("timesheet_date")
-            project_activity = form.cleaned_data.get("project_activity")
-            tasks = form.cleaned_data.get("tasks")
-            hours = form.cleaned_data.get("hours")
-            comments = form.cleaned_data.get("comments")
+            start_date = form.cleaned_data.get("start_date")
+            end_date = form.cleaned_data.get("end_date")
+            project = form.cleaned_data.get("project")
 
-            update_timesheet(employee_id, timesheet_date, project_activity, tasks, hours, comments)
+            update_timesheet("manager", employee_id, start_date, end_date, project, tasks="", hours=0, comments="", timesheet_date="")
 
             msg = "Employee TimeSheet Created Successfully!"
         else :
@@ -212,19 +209,16 @@ def timesheet(request):
     return render(request, "manager/timesheet.html", {"msg" : msg, "form": form})
 
 
-def employee_timesheet(request):
+def employee_timesheet(request, employee_id, project, timesheet_date):
     msg = ""
     if request.method == 'POST':
         form = EmployeeTimeSheetForm(request.POST)
         if form.is_valid():
-            employee_id = form.cleaned_data.get("employee_id")
-            timesheet_date = form.cleaned_data.get("timesheet_date")
-            project_activity = form.cleaned_data.get("project_activity")
             tasks = form.cleaned_data.get("tasks")
             hours = form.cleaned_data.get("hours")
             comments = form.cleaned_data.get("comments")
 
-            update_timesheet(employee_id, timesheet_date, project_activity, tasks, hours, comments)
+            update_timesheet("employee", employee_id, project, tasks, hours, comments, timesheet_date, start_date="", end_date="")
 
             msg = "Employee TimeSheet Created Successfully!"
         else :
@@ -235,52 +229,27 @@ def employee_timesheet(request):
     return {"msg" : msg, "form": form}
 
 
-def update_timesheet(employee_id, timesheet_date, project_activity, tasks, hours, comments) :
-    """Add, update & delete timesheet details.
-
-    JSONField data.
-
-    Example:
-    TeamModel.objects.create(data={
-    'name': 'John',
-    'cities': ['London', 'Cambridge'],
-    'pets': {'dogs': ['Rufus', 'Meg']},
-    })
-
-    TeamModel.objects.filter(
-    data__name='John',
-    data__pets__has_key='dogs',
-    data__cities__contains='London',
-    ).delete()
+def update_timesheet(privilege, employee_id, start_date, end_date, project, tasks, hours, comments, timesheet_date) :
+    """Add, update & delete timesheet details using JSONField data.
     """
 
-    TimeSheetModel.objects.create(
-        timesheet = dict(
-            employee_id = employee_id,
-            timesheet_date = str(timesheet_date),
-            project_activity = project_activity,
-            tasks = tasks,
-            hours = hours,
-            comments = comments
+    if privilege == "manager" :
+        TimeSheetModel.objects.create(
+            timesheet = dict(
+                employee_id = employee_id,
+                start_date = str(start_date),
+                end_date = str(end_date),
+                project = project
+            )
         )
-    )
-
-
-"""
-<th>X100_SMSNG_MOBILE</th>
-<th>
-    <ul>
-       <li>Checkins of code<br></li>
-       <li>Verification of rel 0.1<br></li>
-       <li>Regression testing<br></li>
-    </ul>
-</th>
-<th>12</th>
-<th>
-    Closed all action items.<br>
-    Code released internally for packaging.<br>
-</th>
-"""
+    elif privilege == "employee" :
+        timesheet_record = TimeSheetModel.objects.all()
+        for timesheet in timesheet_record :
+            if timesheet["employee_id"] == employee_id and timesheet["project"] == project :
+                timesheet["tasks"] = tasks
+                timesheet["hours"] = hours
+                timesheet["comments"] = comments
+                timesheet["timesheet_date"] = timesheet_date
 
 
 def update_teams() :
