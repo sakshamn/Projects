@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <h2>Welcome, {{ user.username }}!</h2>
+    <form action="/manager/" method="post">
+        <button type="input" value="dashboard.html" name="iframe_src" class="btn btn-secondary">DASHBOARD</button>
+        <button type="input" value="timesheets.html" name="iframe_src" class="btn btn-secondary">TIMESHEETS</button>
+        <button type="input" value="projects.html" name="iframe_src" class="btn btn-secondary">PROJECTS</button>
+        <button type="input" value="teams.html" name="iframe_src" class="btn btn-secondary">TEAMS</button>
+        <button type="input" value="clients.html" name="iframe_src" class="btn btn-secondary">CLIENTS</button>
+        <button type="input" value="settings.html" name="iframe_src" class="btn btn-secondary">SETTINGS</button>
+        <input name="search_project" placeholder="Search Projects">
+        <input type="submit" value="Go">
+        <input type="reset" value="Clear">
+    </form>
+    <br>
+    <iframe src="{{iframe_src}}" height="800" width="100%"></iframe>
+{% endblock %}
+

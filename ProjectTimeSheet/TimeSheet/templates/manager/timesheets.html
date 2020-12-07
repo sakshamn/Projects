@@ -1,0 +1,129 @@
+{% extends 'base_iframe.html' %}
+
+{% block content %}
+    <br>
+    <button id="create_timesheet" class="btn btn-info">CREATE TIMESHEET</button>
+    <br><br>
+    <fieldset class="border p-2">
+        <h2 align="center">TIMESHEETS</h2>
+        Choose Date: <input type="date" name="mydate" id="mydate" min="2019-01-01" max="2030-12-31">
+        <a class="btn btn-primary" href="{% url 'timesheets' %}" onclick="update_date()">SUBMIT</a>
+        <br><br>
+        <div id="table" class="table-editable">
+            <table class="table table-bordered" id="timesheet_table">
+                <thead> <!-- thead means table head or first row -->
+                    <tr class="table-info">
+                        <th>Project/Activity</th>
+                        <th>Tasks Completed</th>
+                        <th>Hours</th>
+                        <th>Comments</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody> <!-- tbody is table body. -->
+                    {% if timesheet_list %}
+                        {% for timesheet_field in timesheet_list %}
+                            <tr class="table-primary">
+                                <th contenteditable="false">{{timesheet_field.project_activity}}</th>
+                                <th contenteditable="false">
+                                    {% for tasks in timesheet_field.tasks %}
+                                        <ul>
+                                            <li>{{tasks}}</li>
+                                        </ul>
+                                    {% endfor %}
+                                </th>
+                                <th contenteditable="false">{{timesheet_field.hours}}</th>
+                                <th contenteditable="false">
+                                    {% for comments in timesheet_field.comments %}
+                                        <ul>
+                                            <li>{{comments}}</li>
+                                        </ul>
+                                    {% endfor %}
+                                </th>
+                                <th contenteditable="false">
+                                   <button type="button" name="edit_btn" value="{{timesheet_field.project_activity}}" class="btn btn-primary editbtn">Edit</button>
+                                   <span class="table-remove"><button type="button" name="delete_btn" value="{{timesheet_field.project_activity}}" class="btn btn-danger">Delete</button></span>
+                                </th>
+                            </tr>
+                        {% endfor %}
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+    <br>
+
+    <div id="timesheet" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>
+                <iframe src="{% url 'timesheet' %}" height="501" width="100%"></iframe>
+            </p>
+        </div>
+    </div>
+
+    <script>  // Settings for Modal
+        // Get the modal
+        var modal = document.getElementById("timesheet");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("create_timesheet");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+/*
+        $(".modal").on("hidden.bs.modal", function () {
+            $(".modal-content").html("");
+        });
+*/
+
+        function update_date() {
+            var chosen_date = document.getElementById("mydate").value;
+            if (chosen_date == "") {
+                alert("Please Choose a Date First!")
+            } else {
+                alert("Displaying TimeSheets for the Date: " + chosen_date)
+            }
+        };
+
+        /* Edit a table row.*/
+        $(".editbtn").click(function() {
+            var currentTD = $(this).parents("tr").find("th");
+            if ($(this).html() == "Edit") {
+                $.each(currentTD, function() {
+                    $(this).prop("contenteditable", true).css({
+                        "background" : "#fff",
+                        "color" : "#000"
+                    })
+                });
+            } else {
+                $.each(currentTD, function() {
+                    $(this).prop("contenteditable", false). removeAttr("style");
+                });
+            }
+
+            $(this).html($(this).html() == "Edit" ? "Save" : "Edit")
+            if ($(this).html() == "Save") {
+                $(this).prop("contenteditable", false)
+            }
+        });
+
+        $("#table").on('click', '.table-remove', function () {
+           $(this).parents('tr').detach();
+        });
+
+    </script>
+
+{% endblock %}
+

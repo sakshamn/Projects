@@ -1,0 +1,25 @@
+{% extends 'base_iframe.html' %}
+
+{% block content %}
+    <h1>SIGN UP</h1>
+    {% if msg %}
+        <mark>{{msg}}</mark>
+    {% endif %}
+    <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <p>
+                {{ field.label_tag }}<br>
+                {{ field }}
+                {% if field.help_text %}
+                    <small style="color: grey">{{ field.help_text }}</small>
+                {% endif %}
+                {% for error in field.errors %}
+                    <p style="color: red">{{ error }}</p>
+                {% endfor %}
+            </p>
+        {% endfor %}
+        <button type="submit" class="btn btn-primary">Sign up</button>
+    </form>
+{% endblock %}
+

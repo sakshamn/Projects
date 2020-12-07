@@ -1,0 +1,84 @@
+{% extends 'base_iframe.html' %}
+
+{% block content %}
+        <h1 align="center">DASHBOARD</h1>
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            PROJECT
+        </button>
+        <div class="dropdown-menu">
+            {% for team_name in teams %}
+                <a class="dropdown-item" href="#">{{team_name}}</a>
+            {% endfor %}
+        </div>
+        <br><br>
+        <div class="container">
+            <b><mark>PROJECT:</mark> i492_INTEL_SRVR</b><br><br>
+            <table class="table table-bordered">
+                <thead> <!-- thead means table head or first row -->
+                    <tr class="table-info">
+                        <th>Deadline</th>
+                        <th>Completion</th>
+                        <th>Cost(in Million Rs)</th>
+                        <th>Client</th>
+                        <th>Team</th>
+                    </tr>
+                </thead>
+                <tbody> <!-- tbody is table body. -->
+                    <tr class="table-primary">
+                        <th>12 Jan 2021</th>
+                        <th>80%</th>
+                        <th>10</th>
+                        <th>Intel</th>
+                        <th>Truechip</th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br><br>
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            TEAM
+        </button>
+        <div class="dropdown-menu">
+            {% for team_name in teams %}
+                <a class="dropdown-item" href="#">{{team_name}}</a>
+            {% endfor %}
+        </div>
+        <br><br>
+        <div class="container">
+            <b><mark>TEAM:</mark> Truechip</b><br><br>
+            <table class="table table-bordered">
+                <thead> <!-- thead means table head or first row -->
+                    <tr class="table-info">
+                        <th>Project</th>
+                        <th>Deadline</th>
+                        <th>Completion</th>
+                        <th>Team Members</th>
+                    </tr>
+                </thead>
+                <tbody> <!-- tbody is table body. -->
+                    <tr class="table-primary">
+                        <th>i492_INTEL_SRVR</th>
+                        <th>12 Jan 2021</th>
+                        <th>80%</th>
+                        <th>
+                            Salman Khan (Lead)<br>
+                            Ronit Roy<br>
+                            Shikhar Dhawan<br>
+                        </th>
+                    </tr>
+                    <tr class="table-primary">
+                        <th>NS32_AMD_TP</th>
+                        <th>11 Feb 2021</th>
+                        <th>65%</th>
+                        <th>
+                            Aamir Khan (Lead)<br>
+                            Hrithik Roshan<br>
+                            Anil Kapoor<br>
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        <br><br>
+{% endblock %}
+

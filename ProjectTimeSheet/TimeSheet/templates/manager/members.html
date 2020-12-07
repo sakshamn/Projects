@@ -1,0 +1,97 @@
+{% extends 'base_iframe.html' %}
+
+{% block content %}
+
+    <form action="/teams/" method="post">
+        <h1 align="center">TEAMS</h1>
+        <button type="input" value="members" name="html_page" class="btn btn-secondary">MEMBERS</button>
+        <button type="input" value="projects" name="html_page" class="btn btn-secondary">PROJECTS</button>
+        <button type="input" value="cost" name="html_page" class="btn btn-secondary">COST</button>
+    </form>
+
+    <fieldset class="border p-2">
+        <legend class="w-auto"><b>Team Details</b></legend>
+
+        <button id="add_new_team" class="btn btn-info">NEW TEAM</button>
+        <button id="add_new_member" class="btn btn-info">NEW MEMBER</button>
+        <button id="add_new_team" class="btn btn-danger">REMOVE TEAM</button>
+        <br><br>
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            SELECT TEAM
+        </button>
+        <div class="dropdown-menu">
+            {% for team_name in teams %}
+                <a class="dropdown-item" href="#">{{team_name}}</a>
+            {% endfor %}
+        </div>
+        <br><br>
+
+        <div class="container">
+            <table class="table table-hover">
+                <thead> <!-- thead means table head or first row -->
+                    <tr class="table-info">
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>CTC(in Rs)</th>
+                        <th>Role</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody> <!-- tbody is table body. -->
+                    <tr class="table-primary">
+                        <th>101</th>
+                        <th>John Watson</th>
+                        <th>john@gmail.com</th>
+                        <th>1200000</th>
+                        <th>Employee</th>
+                        <th>
+                            <button id="add_project" class="btn btn-secondary">EDIT</button><br>
+                            <br>
+                            <button id="add_project" class="btn btn-danger">REMOVE</button><br>
+                        </th>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </fieldset>
+
+    <div id="signup" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <p>
+                <iframe src="{% url 'signup' %}" height="501" width="100%"></iframe>
+            </p>
+        </div>
+    </div>
+
+    <script>  // Settings for Modal
+        // Get the modal
+        var modal = document.getElementById("signup");
+
+        // Get the button that opens the modal
+        var btn = document.getElementById("add_new_member");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal
+        btn.onclick = function() {
+            modal.style.display = "block";
+        }
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+
+/*
+        $(".modal").on("hidden.bs.modal", function () {
+            $(".modal-content").html("");
+        });
+*/
+
+    </script>
+
+{% endblock %}
+

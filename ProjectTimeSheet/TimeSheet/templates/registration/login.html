@@ -1,11 +1,11 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<fieldset>
+<fieldset class="border p-2">
     {% if login_msg %}
         {{login_msg}}
     {% else %}
-        <legend><b>TimeSheet Login</b></legend>
+        <legend class="w-auto"><b>TimeSheet Login</b></legend>
         {% if form.errors %}
             <p style="color: red">Invalid Username or Password. Please try again.</p>
         {% endif %}
