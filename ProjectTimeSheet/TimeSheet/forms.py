@@ -21,25 +21,23 @@ class SignUpForm(UserCreationForm):
 
 
 class TimeSheetForm(forms.Form):
-    employee_id = forms.IntegerField(required=True, help_text="Enter Employee's ID")
+    username = forms.CharField(max_length=20, required=True, help_text="Enter Employee's Username")
     start_date = forms.DateField(widget=forms.SelectDateWidget(), required=True, help_text="Enter the Start Date of Project/Activity")
     end_date = forms.DateField(widget=forms.SelectDateWidget(), required=True, help_text="Enter the End Date of Project/Activity")
-    project = forms.CharField(max_length=30, required=True, help_text="Enter Project Name to be Assigned to the Employee")
+    project_or_activity = forms.CharField(max_length=30, required=True, help_text="Enter Project/Activity Name to be Assigned to the Employee")
 
     class Meta:
         model = User
-        fields = ("employee_id", "start_date", "end_date", "project")
+        fields = ("username", "start_date", "end_date", "project_or_activity")
 
 
 class EmployeeTimeSheetForm(forms.Form) :
-    #project = forms.CharField(max_length=30, required=True, help_text="Project Name Assigned to You")
     tasks = forms.CharField(widget=forms.Textarea, required=True, help_text="Tasks Completed for current Project")
     hours = forms.IntegerField(min_value=0, max_value=12, required=True, help_text="Hours Worked (max 12hrs)")
-    comments = forms.CharField(widget=forms.Textarea, required=False, help_text="Optional Comments")
+    comments = forms.CharField(widget=forms.Textarea(attrs={"rows":10, "cols":15}), required=False, help_text="Optional Comments")
 
     class Meta:
         model = User
-        #fields = ("project", "tasks", "hours", "comments")
         fields = ("tasks", "hours", "comments")
 
 

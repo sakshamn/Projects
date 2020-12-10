@@ -5,70 +5,97 @@
     <marquee id="message">{{timesheet_status}}</marquee><br>
     <fieldset class="border p-2">
         <h2 align="center">YOUR TIMESHEET</h2>
-        <form action="/employee/" method="post">
-            {% csrf_token %}
-            Choose Date: <input type="date" name="mydate" id="mydate" min="2019-01-01" max="2030-12-31">
-            <a class="btn btn-light" href="{% url 'employee' %}" onclick="update_date()">SUBMIT</a>
-            <br><br>
-            <table class="table table-bordered" id="timesheet_table">
-                <thead> <!-- thead means table head or first row -->
-                    <tr class="table-info">
-                        <th>Project:</th>
-                        {% for field in form %}
-                            <th>{{ field.label_tag }}</th>
-                        {% endfor %}
-                    </tr>
-                </thead>
-                <tbody> <!-- tbody is table body. -->
-                    <tr class="table-primary">
-                        <td style="color: grey">Project Assigned</td>
-                        {% for field in form %}
-                            {% if field.help_text %}
-                                <td style="color: grey">{{ field.help_text }}</td>
-                            {% endif %}
-                        {% endfor %}
-                    </tr>
 
-                    {% if projects %}
-                        {% for project in projects %}
-                            <tr class="table-primary">
-                                <th>{{project}}</th>
-                                {% for field in form %}
-                                    <td>
-                                        {{field}}
-                                        {% for error in field.errors %}
-                                            <p style="color: red">{{ error }}</p>
-                                        {% endfor %}
-                                    </td>
-                                {% endfor %}
-                            </tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody> 
-            </table> 
-            <button type="submit" class="btn btn-primary" onclick="update_msg()">SUBMIT TIMESHEET</button>
-            <button type="reset" class="btn btn-secondary">RESET TIMESHEET</button>
+        <form action="/employee/" method="GET">
+            {% csrf_token %}
+            Choose Date: <input type="date" class="form-control" name="mydate" id="mydate" min="2019-01-01" max="2030-12-31" value="{{timesheet_date}}">
+            <!-- Use location.href=location.href to reload the page. -->
+            <button class="btn btn-primary" onclick="location.href=location.href">RELOAD TIMESHEET</button>
             <br><br>
         </form>
+
+        {% if projects_or_activities %}
+            {% for project_or_activity, details in projects_or_activities.submitted.items %}
+                <b><mark>PROJECT:</mark> {{project_or_activity}}</b>
+                <br><br>
+                <div class="container">
+                    <table class="table table-bordered">
+                        <thead> <!-- thead means table head or first row -->
+                            <tr class="table-info">
+                                {% for field in form %}
+                                    <th>{{ field.label_tag }}</th>
+                                {% endfor %}
+                                <th>Status:</th>
+                            </tr>
+                        </thead>
+                        <tbody> <!-- tbody is table body. -->
+                            <tr class="table-primary">
+                                {% for field, value in details.items %}
+                                    <td>{{value}}</td>
+                                {% endfor %}
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <br><br>
+            {% endfor %}
+
+            {% if projects_or_activities.pending %}
+                <form action="/employee/" method="POST">
+                    {% csrf_token %}
+                    <table class="table table-bordered" id="timesheet_table">
+                        <thead> <!-- thead means table head or first row -->
+                            <tr class="table-info">
+                                <th>Project:</th>
+                                {% for field in form %}
+                                    <th>{{ field.label_tag }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody> <!-- tbody is table body. -->
+                            <tr class="table-primary">
+                                <td style="color: grey">Project Assigned</td>
+                                {% for field in form %}
+                                    {% if field.help_text %}
+                                        <td style="color: grey">{{ field.help_text }}</td>
+                                    {% endif %}
+                                {% endfor %}
+                            </tr>
+                            {% for project_or_activity in projects_or_activities.pending %}
+                                <tr class="table-primary">
+                                    <th>{{project_or_activity}}</th>
+                                    {% for field in form %}
+                                        <td>
+                                            {{field}}
+                                            {% for error in field.errors %}
+                                                <p style="color: red">{{ error }}</p>
+                                            {% endfor %}
+                                        </td>
+                                    {% endfor %}
+                                </tr>
+                            {% endfor %}
+                        </tbody> 
+                    </table> 
+                    <button type="submit" class="btn btn-primary" onclick="update_msg()">SUBMIT</button>
+                    <button type="reset" class="btn btn-secondary">RESET</button>
+                    <br><br>
+                </form>
+            {% endif %}
+        {% endif %}
     </fieldset>
     <br>
 
     <script>
-
-        function update_date() {
+        function update_msg() {
             const chosen_date = document.getElementById("mydate").value;
+            document.getElementById("message").innerHTML = "";
+
             if (chosen_date == "") {
                 alert("Please Choose a Date First!")
             } else {
-                alert("Displaying TimeSheet for the Date: " + chosen_date)
+                alert("Submitting TimeSheet for the Date: " + chosen_date)
             }
-        };
-
-        function update_msg() {
-            document.getElementById("message").innerHTML = "";
-            alert("TimeSheet Submitted!")
         }
-
     </script>
 
 {% endblock %}

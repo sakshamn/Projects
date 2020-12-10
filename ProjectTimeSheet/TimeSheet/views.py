@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views.decorators.csrf import csrf_exempt
 from urllib.parse import urlencode
+from django.urls import reverse
 
 ## We need to set xframe_options_sameorigin decorator to prevent clickjacking.
 ## Clickjacking prevents loading of iframe sources by default for security.
@@ -18,7 +19,7 @@ from TimeSheet.forms import SignUpForm, TimeSheetForm, EmployeeTimeSheetForm
 from datetime import date 
 
 ## User Global Constants
-TODAY = date.today().strftime("%d/%m/%Y")
+TODAY = date.today().strftime("%Y-%m-%d")
 
 ## Dicts that shall initialise dicts inside function for the first time.
 TEAM_DETAILS = dict(
@@ -41,15 +42,27 @@ PROJECT_DETAILS = dict(
     deadline            = ""
 )
 
+## User Global Data Class
+class GlobalData() :
+    def __init__(self) :
+        self.date = TODAY
+        self.username = ""
+
+global_data = GlobalData()
+
+
 ## Create your views here.
 
 def redirect_parameters(base_url, parameter) :
     """Use redirect with parameters to be passed to the page you are redirecting to."""
-    url = "/{}/?{}".format(base_url, parameter)
+    base_url = reverse(base_url)    ## /base_url/
+    parameter = urlencode(parameter)    ## parameter=value
+    url = "{}?{}".format(base_url, parameter)   ## /base_url/?parameter=value
     return url
 
 
 #@login_required
+@csrf_exempt
 def home(request):
     username = request.POST.get("username")
     password = request.POST.get("password")
@@ -61,11 +74,14 @@ def home(request):
     else :
         login(request, user)
 
+    global_data.username = username
+
     privilege = record[0].privilege
     if privilege == "manager" :
         return redirect("/manager/")
     else :
         return redirect("/employee/")
+        #return redirect(redirect_parameters("employee", {"username" : username}))
 
 
 @csrf_exempt
@@ -99,40 +115,22 @@ def teams(request) :
 @login_required
 @csrf_exempt
 def employee(request) :
-    """Employee main page when a employee logins."""
+    """Employee main page when a employee logins.
+    """
 
-    if (timesheet_date := request.POST.get("mydate")) is None :
+    ## Dict to pass variables to employee.html
+    employee_timesheet_dict = {}
+
+    if (timesheet_date := request.GET.get("mydate")) is None :
         timesheet_date = TODAY
-    print(timesheet_date)
 
-    if (data := request.POST.get("data")) is None :
-        data = ""
+    employee_timesheet_dict["timesheet_date"] = timesheet_date
 
-    if (edit_btn := request.POST.get("edit_btn")) is None :
-        edit_btn = ""
+    #username = request.GET.get("username")
 
-    if (delete_btn := request.POST.get("delete_btn")) is None :
-        delete_btn = ""
+    employee_timesheet_dict = employee_timesheet(request, employee_timesheet_dict)
 
-    print("data", data)
-    print("edit_btn", edit_btn)
-    print("delete_btn", delete_btn)
-
-    employee_id = 1
-    project = ""
-
-    employee_timesheet_dict = employee_timesheet(request, employee_id, project, timesheet_date)
-
-    timesheet_record = TimeSheetModel.objects.all()
-    username = request.POST.get("username")
-    employee_timesheet_dict["projects"] = []
-    if len(timesheet_record) > 0 :
-        for record in timesheet_record :
-            pass
-            #if record.timesheet["timesheet_date"] == timesheet_date and record.timesheet["username"] == request.POST.get("username") :
-            #if record.timesheet["timesheet_date"] == timesheet_date :
-                ## Append all projects for the particular date & employee id
-                #employee_timesheet_dict["projects"].append(record.timesheet["project"])
+    print("NSAK1:", employee_timesheet_dict)
 
     return render(request, "employee/employee.html", employee_timesheet_dict)
 
@@ -193,12 +191,12 @@ def timesheet(request):
     if request.method == 'POST':
         form = TimeSheetForm(request.POST)
         if form.is_valid():
-            employee_id = form.cleaned_data.get("employee_id")
+            username = form.cleaned_data.get("username")
             start_date = form.cleaned_data.get("start_date")
             end_date = form.cleaned_data.get("end_date")
-            project = form.cleaned_data.get("project")
+            project_or_activity = form.cleaned_data.get("project_or_activity")
 
-            update_timesheet("manager", employee_id, start_date, end_date, project, tasks="", hours=0, comments="", timesheet_date="")
+            update_timesheet("manager", username, project_or_activity, start_date=start_date, end_date=end_date)
 
             msg = "Employee TimeSheet Created Successfully!"
         else :
@@ -209,47 +207,98 @@ def timesheet(request):
     return render(request, "manager/timesheet.html", {"msg" : msg, "form": form})
 
 
-def employee_timesheet(request, employee_id, project, timesheet_date):
-    msg = ""
-    if request.method == 'POST':
-        form = EmployeeTimeSheetForm(request.POST)
-        if form.is_valid():
-            tasks = form.cleaned_data.get("tasks")
-            hours = form.cleaned_data.get("hours")
-            comments = form.cleaned_data.get("comments")
+def employee_timesheet(request, employee_timesheet_dict):
+    """
 
-            update_timesheet("employee", employee_id, project, tasks, hours, comments, timesheet_date, start_date="", end_date="")
+    Timesheet Date shall be between start_date & end_date. We shall not perform this check
+    here because it shall be taken care while displaying the Timesheet form to the employee.
+    """
+    ## Local Variables
+    msg = ""
+    employee_timesheet_dict["projects_or_activities"] = {
+        "submitted" : {},
+        "pending" : []
+    }
+    post_dict = dict(request.POST)  ## Get the form responses into a dict. request.POST doesn't work exactly like a dict.
+
+    print("NSAK2:", post_dict)
+
+    timesheet_record = TimeSheetModel.objects.filter(timesheet__username=global_data.username)
+    if len(timesheet_record) > 0 :
+        for _record in timesheet_record :
+
+            print("NSAK4:", _record.timesheet["start_date"], employee_timesheet_dict["timesheet_date"], _record.timesheet["end_date"])
+
+            ## Append all projects for the particular date & employee id
+            if _record.timesheet["start_date"] <= employee_timesheet_dict["timesheet_date"] <= _record.timesheet["end_date"] :
+
+                print("NSAK5:", _record.timesheet)
+
+                ## Is timesheet already submitted for this date by the user - username?
+                if employee_timesheet_dict["timesheet_date"] in _record.timesheet :
+                    ## Take this as list because its easy to iterate over lists in html
+                    employee_timesheet_dict["projects_or_activities"]["submitted"][_record.timesheet["project_or_activity"]] = _record.timesheet[employee_timesheet_dict["timesheet_date"]]
+                else :
+                    employee_timesheet_dict["projects_or_activities"]["pending"].append(_record.timesheet["project_or_activity"])
+
+    if request.method == 'POST':
+        form = EmployeeTimeSheetForm(request.POST)  ## Get the filled form response
+        if form.is_valid(): ## Check for form field errors
+            for project_or_activity in employee_timesheet_dict["projects_or_activities"]["pending"] :
+
+                ## Each project_or_activity shall have their own field values separately
+                ## pop works correctly because the order of the elements in the lists on both
+                ## sides is same - project wise
+                tasks = post_dict["tasks"].pop(0)
+                hours = post_dict["hours"].pop(0)
+                comments = post_dict["comments"].pop(0)
+
+                update_timesheet("employee", global_data.username, project_or_activity, tasks=tasks, hours=hours, comments=comments, timesheet_date=employee_timesheet_dict["timesheet_date"])
 
             msg = "Employee TimeSheet Created Successfully!"
         else :
             msg = "Please Correct The Errors Below:"
     else:
+        ## If form is not submitted, it must be the first time we are displaying the form
+        ## Check for the database about the project_or_activity details to be displayed in
+        ## HTML table.
+
         form = EmployeeTimeSheetForm()
 
-    return {"msg" : msg, "form": form}
+    employee_timesheet_dict["msg"] = msg
+    employee_timesheet_dict["form"] = EmployeeTimeSheetForm()   ## For printing form with its fields
+
+    return employee_timesheet_dict
 
 
-def update_timesheet(privilege, employee_id, start_date, end_date, project, tasks, hours, comments, timesheet_date) :
+def update_timesheet(privilege, username, project_or_activity, start_date="", end_date="", tasks="", hours=0, comments="", timesheet_date="") :
     """Add, update & delete timesheet details using JSONField data.
     """
 
     if privilege == "manager" :
         TimeSheetModel.objects.create(
             timesheet = dict(
-                employee_id = employee_id,
+                username = username,
                 start_date = str(start_date),
                 end_date = str(end_date),
-                project = project
+                project_or_activity = project_or_activity,
             )
         )
     elif privilege == "employee" :
-        timesheet_record = TimeSheetModel.objects.all()
-        for timesheet in timesheet_record :
-            if timesheet["employee_id"] == employee_id and timesheet["project"] == project :
-                timesheet["tasks"] = tasks
-                timesheet["hours"] = hours
-                timesheet["comments"] = comments
-                timesheet["timesheet_date"] = timesheet_date
+        timesheet_record = TimeSheetModel.objects.filter(timesheet__username=username)
+        if len(timesheet_record) > 0 :
+            for record in timesheet_record :
+                if record.timesheet["project_or_activity"] == project_or_activity :
+                    ## Create a new dict as per the timesheet_date for a particular employee
+                    ## and projectwise separately
+                    record.timesheet[timesheet_date] = {}
+                    record.timesheet[timesheet_date]["tasks"] = tasks
+                    record.timesheet[timesheet_date]["hours"] = hours
+                    record.timesheet[timesheet_date]["comments"] = comments
+                    record.timesheet[timesheet_date]["timesheet_status"] = "submitted"
+
+                    record.save()
+                    print("NSAK3:", record.timesheet)
 
 
 def update_teams() :
