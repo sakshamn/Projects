@@ -16,7 +16,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from django.contrib.auth import views as auth_views
-from TimeSheet.views import home, signup, manager, employee, dashboard, teams, timesheet, timesheets
+from TimeSheet.views import home, signup, manager, employee, dashboard, teams, create_timesheet, timesheets
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -31,6 +31,7 @@ urlpatterns = [
     path('manager/timesheets.html', timesheets, name="timesheets"),
     path('manager/teams.html', teams),
     path('teams/', teams),
-    path('timesheet/', timesheet, name="timesheet"),
+    path('create_timesheet/', create_timesheet, name="create_timesheet"),
+    path('timesheets/', timesheets, name="timesheets"),
 ]
 
