@@ -20,6 +20,7 @@ from datetime import date
 
 ## User Global Constants
 TODAY = date.today().strftime("%Y-%m-%d")
+DEBUG_LOG = open("debug.log", "w")
 
 ## Dicts that shall initialise dicts inside function for the first time.
 TEAM_DETAILS = dict(
@@ -66,7 +67,7 @@ def redirect_parameters(base_url, parameter) :
 def home(request):
     username = request.POST.get("username")
     password = request.POST.get("password")
-    record = CredentialsModel.objects.filter(username=username)
+    _record = CredentialsModel.objects.filter(username=username)
 
     if (user := authenticate(username=username, password=password)) is None :
         msg = "Invalid Credentials! Try Again or Contact IT Support!"
@@ -76,7 +77,7 @@ def home(request):
 
     global_data.username = username
 
-    privilege = record[0].privilege
+    privilege = _record[0].privilege
     if privilege == "manager" :
         return redirect("/manager/")
     else :
@@ -121,16 +122,15 @@ def employee(request) :
     ## Dict to pass variables to employee.html
     employee_timesheet_dict = {}
 
-    if (timesheet_date := request.GET.get("mydate")) is None :
-        timesheet_date = TODAY
+    if (timesheet_date := request.GET.get("timesheet_date")) is None :
+        timesheet_date = global_data.date
 
+    global_data.date = timesheet_date
     employee_timesheet_dict["timesheet_date"] = timesheet_date
 
     #username = request.GET.get("username")
 
     employee_timesheet_dict = employee_timesheet(request, employee_timesheet_dict)
-
-    print("NSAK1:", employee_timesheet_dict)
 
     return render(request, "employee/employee.html", employee_timesheet_dict)
 
@@ -142,11 +142,83 @@ def dashboard(request) :
     return render(request, "manager/dashboard.html")
 
 
+@csrf_exempt
 @xframe_options_sameorigin
 def timesheets(request) :
     """
     """
-    return render(request, "manager/timesheets.html")
+    ## Dict to pass variables to timesheets.html
+    manager_timesheet_dict = {}
+
+    if (timesheet_date := request.GET.get("timesheet_date")) is None :
+        timesheet_date = global_data.date
+
+    manager_timesheet_dict["timesheet_action"] = "unknown"
+    if (timesheet_action := request.POST.get("approved")) is not None :
+        manager_timesheet_dict["timesheet_action"] = timesheet_action   ## Get username & project names.
+    elif (timesheet_action := request.POST.get("rejected")) is not None :
+        manager_timesheet_dict["timesheet_action"] = timesheet_action   ## Get username & project names.
+
+    global_data.date = timesheet_date
+    manager_timesheet_dict["timesheet_date"] = timesheet_date
+    manager_timesheet_dict["form"] = EmployeeTimeSheetForm()
+
+    #username = request.GET.get("username")
+
+    manager_timesheet_dict = manager_timesheet(request, manager_timesheet_dict)
+
+    return render(request, "manager/timesheets.html", manager_timesheet_dict)
+
+
+def manager_timesheet(request, manager_timesheet_dict):
+    """
+    """
+    manager_timesheet_dict["submitted"] = {}
+    manager_timesheet_dict["approved"] = {}
+    manager_timesheet_dict["rejected"] = {}
+    manager_timesheet_dict["pending"] = {}
+
+    ## Local Variables
+    _timesheet_date = manager_timesheet_dict["timesheet_date"]
+
+    _timesheet_record = TimeSheetModel.objects.all()
+    if len(_timesheet_record) > 0 :
+        for _record in _timesheet_record :
+
+            ## Append all projects for the particular date & employee id
+            if _record.timesheet["start_date"] <= _timesheet_date <= _record.timesheet["end_date"] :
+
+                _username = _record.timesheet["username"]
+                _project_or_activity = _record.timesheet["project_or_activity"]
+
+                ## Is timesheet already submitted for this date by the employee?
+                if _timesheet_date in _record.timesheet :
+
+                    ## Check whether the timesheet status is submitted or already approved.
+                    if _record.timesheet[_timesheet_date]["timesheet_status"] == "submitted" :
+                        ## TODO : store data correctly
+                        manager_timesheet_dict["submitted"].setdefault(_username, {})
+                        manager_timesheet_dict["submitted"][_username].setdefault(_project_or_activity, _record.timesheet[_timesheet_date])
+                        if manager_timesheet_dict["timesheet_action"] != "unknown" :
+                            _user, _project, _status = manager_timesheet_dict["timesheet_action"].split(":")
+                            if _record.timesheet["username"] == _user and _record.timesheet["project_or_activity"] == _project :
+                                _record.timesheet[_timesheet_date]["timesheet_status"] = _status
+                        _record.save()
+                    elif _record.timesheet[_timesheet_date]["timesheet_status"] == "approved" :
+                        manager_timesheet_dict["approved"].setdefault(_username, {})
+                        manager_timesheet_dict["approved"][_username].setdefault(_project_or_activity, _record.timesheet[_timesheet_date])
+
+                    elif _record.timesheet[_timesheet_date]["timesheet_status"] == "rejected" :
+                        manager_timesheet_dict["rejected"].setdefault(_username, {})
+                        manager_timesheet_dict["rejected"][_username].setdefault(_project_or_activity, _record.timesheet[_timesheet_date])
+
+                else :  ## Employee did not submit the timesheet for the date - timesheet_date
+                    manager_timesheet_dict["pending"].setdefault(_username, [])
+                    manager_timesheet_dict["pending"][_username].append(_record.timesheet["project_or_activity"])
+
+    print(DEBUG_LOG, "NSAK0:", manager_timesheet_dict)
+
+    return manager_timesheet_dict
 
 
 @xframe_options_sameorigin
@@ -186,7 +258,7 @@ def signup(request):
 
 @xframe_options_sameorigin
 @csrf_exempt
-def timesheet(request):
+def create_timesheet(request):
     msg = ""
     if request.method == 'POST':
         form = TimeSheetForm(request.POST)
@@ -204,7 +276,7 @@ def timesheet(request):
     else:
         form = TimeSheetForm()
 
-    return render(request, "manager/timesheet.html", {"msg" : msg, "form": form})
+    return render(request, "manager/create_timesheet.html", {"msg" : msg, "form": form})
 
 
 def employee_timesheet(request, employee_timesheet_dict):
@@ -213,26 +285,21 @@ def employee_timesheet(request, employee_timesheet_dict):
     Timesheet Date shall be between start_date & end_date. We shall not perform this check
     here because it shall be taken care while displaying the Timesheet form to the employee.
     """
-    ## Local Variables
-    msg = ""
     employee_timesheet_dict["projects_or_activities"] = {
         "submitted" : {},
         "pending" : []
     }
-    post_dict = dict(request.POST)  ## Get the form responses into a dict. request.POST doesn't work exactly like a dict.
 
-    print("NSAK2:", post_dict)
+    ## Local Variables
+    msg = ""
+    _post_dict = dict(request.POST)  ## Get the form responses into a dict. request.POST doesn't work exactly like a dict.
 
-    timesheet_record = TimeSheetModel.objects.filter(timesheet__username=global_data.username)
-    if len(timesheet_record) > 0 :
-        for _record in timesheet_record :
-
-            print("NSAK4:", _record.timesheet["start_date"], employee_timesheet_dict["timesheet_date"], _record.timesheet["end_date"])
+    _timesheet_record = TimeSheetModel.objects.filter(timesheet__username=global_data.username)
+    if len(_timesheet_record) > 0 :
+        for _record in _timesheet_record :
 
             ## Append all projects for the particular date & employee id
             if _record.timesheet["start_date"] <= employee_timesheet_dict["timesheet_date"] <= _record.timesheet["end_date"] :
-
-                print("NSAK5:", _record.timesheet)
 
                 ## Is timesheet already submitted for this date by the user - username?
                 if employee_timesheet_dict["timesheet_date"] in _record.timesheet :
@@ -249,9 +316,9 @@ def employee_timesheet(request, employee_timesheet_dict):
                 ## Each project_or_activity shall have their own field values separately
                 ## pop works correctly because the order of the elements in the lists on both
                 ## sides is same - project wise
-                tasks = post_dict["tasks"].pop(0)
-                hours = post_dict["hours"].pop(0)
-                comments = post_dict["comments"].pop(0)
+                tasks = _post_dict["tasks"].pop(0)
+                hours = _post_dict["hours"].pop(0)
+                comments = _post_dict["comments"].pop(0)
 
                 update_timesheet("employee", global_data.username, project_or_activity, tasks=tasks, hours=hours, comments=comments, timesheet_date=employee_timesheet_dict["timesheet_date"])
 
@@ -285,20 +352,19 @@ def update_timesheet(privilege, username, project_or_activity, start_date="", en
             )
         )
     elif privilege == "employee" :
-        timesheet_record = TimeSheetModel.objects.filter(timesheet__username=username)
-        if len(timesheet_record) > 0 :
-            for record in timesheet_record :
-                if record.timesheet["project_or_activity"] == project_or_activity :
+        _timesheet_record = TimeSheetModel.objects.filter(timesheet__username=username)
+        if len(_timesheet_record) > 0 :
+            for _record in _timesheet_record :
+                if _record.timesheet["project_or_activity"] == project_or_activity :
                     ## Create a new dict as per the timesheet_date for a particular employee
                     ## and projectwise separately
-                    record.timesheet[timesheet_date] = {}
-                    record.timesheet[timesheet_date]["tasks"] = tasks
-                    record.timesheet[timesheet_date]["hours"] = hours
-                    record.timesheet[timesheet_date]["comments"] = comments
-                    record.timesheet[timesheet_date]["timesheet_status"] = "submitted"
+                    _record.timesheet[timesheet_date] = {}
+                    _record.timesheet[timesheet_date]["tasks"] = tasks
+                    _record.timesheet[timesheet_date]["hours"] = hours
+                    _record.timesheet[timesheet_date]["comments"] = comments
+                    _record.timesheet[timesheet_date]["timesheet_status"] = "submitted"
 
-                    record.save()
-                    print("NSAK3:", record.timesheet)
+                    _record.save()
 
 
 def update_teams() :

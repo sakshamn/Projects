@@ -2,72 +2,162 @@
 
 {% block content %}
     <br>
-    <button id="create_timesheet" class="btn btn-info">CREATE TIMESHEET</button>
+    <button id="create_timesheet_btn" class="btn btn-info">CREATE TIMESHEET</button>
     <br><br>
     <fieldset class="border p-2">
         <h2 align="center">TIMESHEETS</h2>
-        Choose Date: <input type="date" name="mydate" id="mydate" min="2019-01-01" max="2030-12-31">
-        <a class="btn btn-primary" href="{% url 'timesheets' %}" onclick="update_date()">SUBMIT</a>
-        <br><br>
-        <div id="table" class="table-editable">
-            <table class="table table-bordered" id="timesheet_table">
-                <thead> <!-- thead means table head or first row -->
-                    <tr class="table-info">
-                        <th>Project/Activity</th>
-                        <th>Tasks Completed</th>
-                        <th>Hours</th>
-                        <th>Comments</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody> <!-- tbody is table body. -->
-                    {% if timesheet_list %}
-                        {% for timesheet_field in timesheet_list %}
-                            <tr class="table-primary">
-                                <th contenteditable="false">{{timesheet_field.project_activity}}</th>
-                                <th contenteditable="false">
-                                    {% for tasks in timesheet_field.tasks %}
-                                        <ul>
-                                            <li>{{tasks}}</li>
-                                        </ul>
-                                    {% endfor %}
-                                </th>
-                                <th contenteditable="false">{{timesheet_field.hours}}</th>
-                                <th contenteditable="false">
-                                    {% for comments in timesheet_field.comments %}
-                                        <ul>
-                                            <li>{{comments}}</li>
-                                        </ul>
-                                    {% endfor %}
-                                </th>
-                                <th contenteditable="false">
-                                   <button type="button" name="edit_btn" value="{{timesheet_field.project_activity}}" class="btn btn-primary editbtn">Edit</button>
-                                   <span class="table-remove"><button type="button" name="delete_btn" value="{{timesheet_field.project_activity}}" class="btn btn-danger">Delete</button></span>
-                                </th>
-                            </tr>
-                        {% endfor %}
-                    {% endif %}
-                </tbody>
-            </table>
-        </div>
+        <form action="/timesheets/" method="GET">
+            {% csrf_token %}
+            Choose Date: <input type="date" class="form-control" name="timesheet_date" id="timesheet_date" min="2019-01-01" max="2030-12-31" value="{{timesheet_date}}">
+            <!-- Use location.href=location.href to reload the page. -->
+            <button class="btn btn-primary" onclick="location.href=location.href">RELOAD TIMESHEET</button>
+            <br><br>
+        </form>
+
+        <form action="/timesheets/" method="POST">
+            {% if submitted %}
+                <b>TIMESHEETS PENDING APPROVAL</b>
+                <br><br>
+                {% for username, project_or_activity in submitted.items %}
+                    <b>USERNAME: </b><mark>{{username}}</mark>
+                    <br><br>
+                    <div class="container">
+                        <table class="table table-bordered">
+                            <thead> <!-- thead means table head or first row -->
+                                <tr class="table-info">
+                                    <th>Project:</th>
+                                    <th>Tasks:</th>
+                                    <th>Hours:</th>
+                                    <th>Comments:</th>
+                                    <th>Status:</th>
+                                    <th>Action:</th>
+                                </tr>
+                            </thead>
+                            <tbody> <!-- tbody is table body. -->
+                                {% for project, details  in project_or_activity.items %}
+                                    <tr class="table-primary">
+                                        <td>{{project}}</td>
+                                        <td>{{details.tasks}}</td>
+                                        <td>{{details.hours}}</td>
+                                        <td>{{details.comments}}</td>
+                                        <td>{{details.timesheet_status}}</td>
+                                        <td>
+                                           <button name="approved" value="{{username}}:{{project}}:approved" class="btn btn-info" onclick="location.href=location.href">Approve</button>
+                                            <br><br>
+                                            <button name="rejected" value="{{username}}:{{project}}:rejected" class="btn btn-danger" onclick="location.href=location.href">Reject</button>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if rejected %}
+                <b>TIMESHEETS REJECTED</b>
+                <br><br>
+                {% for username, project_or_activity in rejected.items %}
+                    <b>USERNAME: </b><mark>{{username}}</mark>
+                    <br><br>
+                    <div class="container">
+                        <table class="table table-bordered">
+                            <thead> <!-- thead means table head or first row -->
+                                <tr class="table-info">
+                                    <th>Project:</th>
+                                    <th>Tasks:</th>
+                                    <th>Hours:</th>
+                                    <th>Comments:</th>
+                                    <th>Status:</th>
+                                </tr>
+                            </thead>
+                            <tbody> <!-- tbody is table body. -->
+                                {% for project, details  in project_or_activity.items %}
+                                    <tr class="table-primary">
+                                        <td>{{project}}</td>
+                                        <td>{{details.tasks}}</td>
+                                        <td>{{details.hours}}</td>
+                                        <td>{{details.comments}}</td>
+                                        <td>{{details.timesheet_status}}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if approved %}
+                <b>TIMESHEETS APPROVED</b>
+                <br><br>
+                {% for username, project_or_activity in approved.items %}
+                    <b>USERNAME: </b><mark>{{username}}</mark>
+                    <br><br>
+                    <div class="container">
+                        <table class="table table-bordered">
+                            <thead> <!-- thead means table head or first row -->
+                                <tr class="table-info">
+                                    <th>Project:</th>
+                                    <th>Tasks:</th>
+                                    <th>Hours:</th>
+                                    <th>Comments:</th>
+                                    <th>Status:</th>
+                                </tr>
+                            </thead>
+                            <tbody> <!-- tbody is table body. -->
+                                {% for project, details  in project_or_activity.items %}
+                                    <tr class="table-primary">
+                                        <td>{{project}}</td>
+                                        <td>{{details.tasks}}</td>
+                                        <td>{{details.hours}}</td>
+                                        <td>{{details.comments}}</td>
+                                        <td>{{details.timesheet_status}}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            {% if pending %}
+                <b>TIMESHEETS PENDING SUBMISSION</b>
+                <br><br>
+                {% for username, project_or_activity in pending.items %}
+                    <b>USERNAME: </b><mark>{{username}}</mark>
+                    <br>
+                    <b>PROJECTS:</b>
+                    <br>
+                    <ul>
+                    {% for project in project_or_activity %}
+                        <li>
+                            {{project}}
+                        </li>
+                    {% endfor %}
+                    </ul>
+                    <button name="timesheet_reminder" value="send" class="btn btn-info">SEND REMINDER</button>
+                    <br><br>
+                {% endfor %}
+            {% endif %}
+        </form>
     </fieldset>
     <br>
 
-    <div id="timesheet" class="modal">
+    <div id="create_timesheet" class="modal">
         <div class="modal-content">
             <span class="close">&times;</span>
             <p>
-                <iframe src="{% url 'timesheet' %}" height="501" width="100%"></iframe>
+                <iframe src="{% url 'create_timesheet' %}" height="501" width="100%"></iframe>
             </p>
         </div>
     </div>
 
     <script>  // Settings for Modal
         // Get the modal
-        var modal = document.getElementById("timesheet");
+        var modal = document.getElementById("create_timesheet");
 
         // Get the button that opens the modal
-        var btn = document.getElementById("create_timesheet");
+        var btn = document.getElementById("create_timesheet_btn");
 
         // Get the <span> element that closes the modal
         var span = document.getElementsByClassName("close")[0];
@@ -89,39 +179,13 @@
 */
 
         function update_date() {
-            var chosen_date = document.getElementById("mydate").value;
+            var chosen_date = document.getElementById("timesheet_date").value;
             if (chosen_date == "") {
                 alert("Please Choose a Date First!")
             } else {
                 alert("Displaying TimeSheets for the Date: " + chosen_date)
             }
         };
-
-        /* Edit a table row.*/
-        $(".editbtn").click(function() {
-            var currentTD = $(this).parents("tr").find("th");
-            if ($(this).html() == "Edit") {
-                $.each(currentTD, function() {
-                    $(this).prop("contenteditable", true).css({
-                        "background" : "#fff",
-                        "color" : "#000"
-                    })
-                });
-            } else {
-                $.each(currentTD, function() {
-                    $(this).prop("contenteditable", false). removeAttr("style");
-                });
-            }
-
-            $(this).html($(this).html() == "Edit" ? "Save" : "Edit")
-            if ($(this).html() == "Save") {
-                $(this).prop("contenteditable", false)
-            }
-        });
-
-        $("#table").on('click', '.table-remove', function () {
-           $(this).parents('tr').detach();
-        });
 
     </script>
 

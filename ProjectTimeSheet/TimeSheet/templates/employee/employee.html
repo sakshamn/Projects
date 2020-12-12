@@ -8,7 +8,7 @@
 
         <form action="/employee/" method="GET">
             {% csrf_token %}
-            Choose Date: <input type="date" class="form-control" name="mydate" id="mydate" min="2019-01-01" max="2030-12-31" value="{{timesheet_date}}">
+            Choose Date: <input type="date" class="form-control" name="timesheet_date" id="timesheet_date" min="2019-01-01" max="2030-12-31" value="{{timesheet_date}}">
             <!-- Use location.href=location.href to reload the page. -->
             <button class="btn btn-primary" onclick="location.href=location.href">RELOAD TIMESHEET</button>
             <br><br>
@@ -87,7 +87,7 @@
 
     <script>
         function update_msg() {
-            const chosen_date = document.getElementById("mydate").value;
+            const chosen_date = document.getElementById("timesheet_date").value;
             document.getElementById("message").innerHTML = "";
 
             if (chosen_date == "") {
