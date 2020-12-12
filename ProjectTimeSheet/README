@@ -1,0 +1,7 @@
+python manage makemigrations
+python manage migrate
+python manage createsuperuser
+admin
+admin
+python manage runserver
+
