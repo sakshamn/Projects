@@ -13,7 +13,8 @@ a:hover{
 }
 
 .dropdown-item {
-    background-color:#1a2b4c !important;
+    /*background-color:#1a2b4c !important;*/
+    background-color:white !important;
 }
 
 img {
