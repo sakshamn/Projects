@@ -21,7 +21,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'w!q93$ow6s&$gox&^4&e#t_9eb88ye@mu34$1ev0m-zwp7!f(t'
+SECRET_KEY = '+g01hlq7up1_nbztc34s_8-hrj3)vo1b7uf@_kb2q-fg9#7r+2'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -56,7 +56,7 @@ ROOT_URLCONF = 'ProjectTimeSheet.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'TimeSheet/templates')],
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -119,8 +119,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 STATIC_URL = '/static/'
+STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
 LOGIN_URL = 'login'
 LOGOUT_URL = 'logout'
 LOGIN_REDIRECT_URL = 'home'

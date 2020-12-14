@@ -20,7 +20,7 @@ from TimeSheet.views import home, signup, manager, employee, dashboard, teams, c
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    #path('home/', home, name="home"),
+
     path('home/', home, name="home"),
     path('login/', auth_views.LoginView.as_view(), {'template_name': 'login.html'}, name='login'),
     path('logout/', auth_views.LogoutView.as_view(), {'next_page': 'login'}, name='logout'),
