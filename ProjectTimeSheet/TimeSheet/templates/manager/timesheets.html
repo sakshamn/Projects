@@ -135,7 +135,7 @@
                         </li>
                     {% endfor %}
                     </ul>
-                    <button name="timesheet_reminder" value="send" class="btn btn-info">SEND REMINDER</button>
+                    <button name="timesheet_reminder" value="{{username}}:{{project_or_activity}}" class="btn btn-info" onclick="location.href=location.href">SEND REMINDER</button>
                     <br><br>
                 {% endfor %}
             {% endif %}

@@ -24,7 +24,6 @@ DEBUG_LOG = open("debug.log", "w")
 
 ## Dicts that shall initialise dicts inside function for the first time.
 TEAM_DETAILS = dict(
-    team_id         = "",   ## Auto Increment
     team_name       = "",
     team_lead       = "",
     members         = [],
@@ -103,12 +102,30 @@ def manager(request) :
 @csrf_exempt
 def teams(request) :
     """Send html page to be shown according to the buttons clicked in the teams.html"""
+
+    params_dict = {
+        "teams" : [],
+        "members" : []
+    }
+    if (selected_team := request.GET.get("select_team")) is None :   ## Default
+        params_dict["selected_team"] = "SELECT TEAM"
+    else :
+        params_dict["selected_team"] = selected_team
+
+    _teams_record = TeamModel.objects.all()
+    if len(_teams_record) > 0 :
+        for _record in _teams_record :
+            params_dict["teams"].append(_record.teams["team_name"])
+            if _record.teams["team_name"] == selected_team :
+                params_dict["members"] = _record.teams["members"]
+
+    if (remove_team := request.GET.get("remove_team")) is not None :   ## Default
+        update_teams(action="delete", team_name=remove_team)
+
     if (html_page := request.POST.get("html_page")) is None :   ## Default
         html_page = "manager/members.html"
-        params_dict = {"teams" : ["Digital", "Analog", "Mixed Signal"]}
     elif (html_page := request.POST.get("html_page")) == "members" :
         html_page = "manager/members.html"
-        params_dict = {"teams" : ["Digital", "Analog", "Mixed Signal"]}
 
     return render(request, html_page, params_dict)
 
@@ -127,6 +144,7 @@ def employee(request) :
 
     global_data.date = timesheet_date
     employee_timesheet_dict["timesheet_date"] = timesheet_date
+    employee_timesheet_dict["timesheet_msg"] = "Pending Timesheet Dates:"
 
     #username = request.GET.get("username")
 
@@ -153,11 +171,15 @@ def timesheets(request) :
     if (timesheet_date := request.GET.get("timesheet_date")) is None :
         timesheet_date = global_data.date
 
-    manager_timesheet_dict["timesheet_action"] = "unknown"
+    manager_timesheet_dict["timesheet_action"] = "none"
     if (timesheet_action := request.POST.get("approved")) is not None :
         manager_timesheet_dict["timesheet_action"] = timesheet_action   ## Get username & project names.
     elif (timesheet_action := request.POST.get("rejected")) is not None :
         manager_timesheet_dict["timesheet_action"] = timesheet_action   ## Get username & project names.
+
+    manager_timesheet_dict["timesheet_reminder"] = "none"
+    if (timesheet_reminder := request.POST.get("timesheet_reminder")) is not None :
+        manager_timesheet_dict["timesheet_reminder"] = timesheet_reminder   ## Get username & project names.
 
     global_data.date = timesheet_date
     manager_timesheet_dict["timesheet_date"] = timesheet_date
@@ -187,7 +209,6 @@ def manager_timesheet(request, manager_timesheet_dict):
 
             ## Append all projects for the particular date & employee id
             if _record.timesheet["start_date"] <= _timesheet_date <= _record.timesheet["end_date"] :
-
                 _username = _record.timesheet["username"]
                 _project_or_activity = _record.timesheet["project_or_activity"]
 
@@ -199,7 +220,7 @@ def manager_timesheet(request, manager_timesheet_dict):
                         ## TODO : store data correctly
                         manager_timesheet_dict["submitted"].setdefault(_username, {})
                         manager_timesheet_dict["submitted"][_username].setdefault(_project_or_activity, _record.timesheet[_timesheet_date])
-                        if manager_timesheet_dict["timesheet_action"] != "unknown" :
+                        if manager_timesheet_dict["timesheet_action"] != "none" :
                             _user, _project, _status = manager_timesheet_dict["timesheet_action"].split(":")
                             if _record.timesheet["username"] == _user and _record.timesheet["project_or_activity"] == _project :
                                 _record.timesheet[_timesheet_date]["timesheet_status"] = _status
@@ -215,8 +236,16 @@ def manager_timesheet(request, manager_timesheet_dict):
                 else :  ## Employee did not submit the timesheet for the date - timesheet_date
                     manager_timesheet_dict["pending"].setdefault(_username, [])
                     manager_timesheet_dict["pending"][_username].append(_record.timesheet["project_or_activity"])
-
-    print(DEBUG_LOG, "NSAK0:", manager_timesheet_dict)
+                    if manager_timesheet_dict["timesheet_reminder"] != "none" :
+                        _user, _project_list = manager_timesheet_dict["timesheet_reminder"].split(":")
+                        if _record.timesheet["username"] == _user and _record.timesheet["project_or_activity"] in _project_list :
+                            ## Create only unique list elements. Add all the dates for a 
+                            ## particular user & project record on which timesheet was not
+                            ## submitted.
+                            _record.timesheet.setdefault("timesheet_reminder", [])
+                            if _timesheet_date not in _record.timesheet["timesheet_reminder"] :
+                                _record.timesheet["timesheet_reminder"].append(_timesheet_date)
+                            _record.save()
 
     return manager_timesheet_dict
 
@@ -239,13 +268,12 @@ def signup(request):
             employee_ctc = form.cleaned_data.get("employee_ctc")
             privilege = form.cleaned_data.get("privilege")
 
-            user = authenticate(username=username, password=password)
-            login(request, user)
-
             obj = CredentialsModel(username = username, password = password, firstname = firstname, lastname = lastname, email = email, team = team, employee_id = employee_id, employee_ctc = employee_ctc, privilege = privilege)
             obj.save()  ## Save the data
 
-            update_teams()
+            ## We are using same variables for different purposes here to add a member to team
+            ## If a team doesn't exist, it shall be created.
+            update_teams(action="add", team_name=team, team_lead=privilege, members={username : [firstname, lastname, email, employee_id, employee_ctc, privilege]}, team_cost=employee_ctc, team_projects=[])
 
             msg = "Signup Done Successfully!"
         else :
@@ -305,8 +333,16 @@ def employee_timesheet(request, employee_timesheet_dict):
                 if employee_timesheet_dict["timesheet_date"] in _record.timesheet :
                     ## Take this as list because its easy to iterate over lists in html
                     employee_timesheet_dict["projects_or_activities"]["submitted"][_record.timesheet["project_or_activity"]] = _record.timesheet[employee_timesheet_dict["timesheet_date"]]
+                    if employee_timesheet_dict["timesheet_date"] in _record.timesheet["timesheet_reminder"] :
+                        _record.timesheet["timesheet_reminder"].remove(employee_timesheet_dict["timesheet_date"])
+                    _record.save()
                 else :
                     employee_timesheet_dict["projects_or_activities"]["pending"].append(_record.timesheet["project_or_activity"])
+
+        for _date in _record.timesheet["timesheet_reminder"] :
+            if _date not in employee_timesheet_dict["timesheet_msg"] :
+                employee_timesheet_dict["timesheet_msg"] += f" '{_date}' "
+
 
     if request.method == 'POST':
         form = EmployeeTimeSheetForm(request.POST)  ## Get the filled form response
@@ -349,6 +385,7 @@ def update_timesheet(privilege, username, project_or_activity, start_date="", en
                 start_date = str(start_date),
                 end_date = str(end_date),
                 project_or_activity = project_or_activity,
+                timesheet_reminder = []
             )
         )
     elif privilege == "employee" :
@@ -367,7 +404,7 @@ def update_timesheet(privilege, username, project_or_activity, start_date="", en
                     _record.save()
 
 
-def update_teams() :
+def update_teams(action="none", team_name="", team_lead="", members={}, team_cost=0, team_projects=[]) :
     """Add, update & delete teams details.
 
     JSONField data.
@@ -386,19 +423,29 @@ def update_teams() :
     ).delete()
     """
 
-    TeamModel.objects.create(
-        teams = dict(
-            team_id         = 1,   ## Auto Increment
-            team_name       = "Testchip",
-            team_lead       = "Saksham",
-            members         = [1, 2, 3, 4, 5],    ## Employe IDs
-            team_cost       = 1000000,
-            team_projects   = ["x321", "x333", "n555", "n608"]
-        )
-    )
-
-    new = TeamModel.objects.all()
-    for i in new :
-        print(i.teams)
+    if action == "add" :  ## Add only 1 member at a time
+        _username, _user_details = list(members.items())[0]
+        _teams_record = TeamModel.objects.filter(teams__team_name=team_name)
+        if len(_teams_record) > 0 :
+            for _record in _teams_record :
+                _record.teams["members"][_username] = _user_details ## No check required of user already exists.
+                _record.teams["team_cost"] += team_cost ## No check required of user already exists.
+                _record.teams["team_lead"] = _username if team_lead == "manager" else _record.teams["team_lead"] ## No check required of user already exists.
+            _record.save()
+        else :  ## User's Team doesn't exist
+            TeamModel.objects.create(
+                teams = dict(
+                    team_name       = team_name,
+                    team_lead       = _username if team_lead == "manager" else "",
+                    members         = members,
+                    team_cost       = team_cost,
+                    team_projects   = team_projects ## TBD : Logic to be added.
+                )
+            )
+    elif action == "update" :
+        pass
+    elif action == "delete" :
+        TeamModel.objects.filter(teams__team_name=team_name).delete()
+        print("TEAM Removed:", team_name, file=DEBUG_LOG)
 
 

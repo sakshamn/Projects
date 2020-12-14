@@ -2,7 +2,7 @@
 
 {% block content %}
     <h2>Welcome, {{ user.username }}!</h2><br>
-    <marquee id="message">{{timesheet_status}}</marquee><br>
+    <marquee id="message"><mark>{{timesheet_msg}}</mark></marquee><br>
     <fieldset class="border p-2">
         <h2 align="center">YOUR TIMESHEET</h2>
 
@@ -76,7 +76,7 @@
                             {% endfor %}
                         </tbody> 
                     </table> 
-                    <button type="submit" class="btn btn-primary" onclick="update_msg()">SUBMIT</button>
+                    <button type="submit" class="btn btn-primary" onclick="date_msg()">SUBMIT</button>
                     <button type="reset" class="btn btn-secondary">RESET</button>
                     <br><br>
                 </form>
@@ -86,15 +86,14 @@
     <br>
 
     <script>
-        function update_msg() {
+        function date_msg() {
             const chosen_date = document.getElementById("timesheet_date").value;
-            document.getElementById("message").innerHTML = "";
-
             if (chosen_date == "") {
                 alert("Please Choose a Date First!")
             } else {
                 alert("Submitting TimeSheet for the Date: " + chosen_date)
             }
+            window.location.reload(true);
         }
     </script>
 

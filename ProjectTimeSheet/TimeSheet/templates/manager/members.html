@@ -6,51 +6,47 @@
         <h1 align="center">TEAMS</h1>
         <button type="input" value="members" name="html_page" class="btn btn-secondary">MEMBERS</button>
         <button type="input" value="projects" name="html_page" class="btn btn-secondary">PROJECTS</button>
-        <button type="input" value="cost" name="html_page" class="btn btn-secondary">COST</button>
     </form>
 
     <fieldset class="border p-2">
         <legend class="w-auto"><b>Team Details</b></legend>
-
-        <button id="add_new_team" class="btn btn-info">NEW TEAM</button>
         <button id="add_new_member" class="btn btn-info">NEW MEMBER</button>
-        <button id="add_new_team" class="btn btn-danger">REMOVE TEAM</button>
-        <br><br>
-        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-            SELECT TEAM
-        </button>
-        <div class="dropdown-menu">
-            {% for team_name in teams %}
-                <a class="dropdown-item" href="#">{{team_name}}</a>
-            {% endfor %}
-        </div>
-        <br><br>
+        <form action="/teams/" method="GET">
+            <br><br>
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+               {{selected_team}}
+            </button>
+            <div class="dropdown-menu">
+                {% for team_name in teams %}
+                    <button class="dropdown-item" name="select_team" value="{{team_name}}" onclick="location.href=location.href">{{team_name}}</button>
+                {% endfor %}
+            </div>
+            <button name="remove_team" value="{{selected_team}}" class="btn btn-danger">REMOVE SELECTED TEAM</button>
+            <br><br>
+        </form>
 
         <div class="container">
             <table class="table table-hover">
                 <thead> <!-- thead means table head or first row -->
                     <tr class="table-info">
-                        <th>ID</th>
-                        <th>Name</th>
+                        <th>Username</th>
+                        <th>FirstName</th>
+                        <th>LastName</th>
                         <th>Email</th>
+                        <th>Employee ID</th>
                         <th>CTC(in Rs)</th>
                         <th>Role</th>
-                        <th>Action</th>
                     </tr>
                 </thead>
                 <tbody> <!-- tbody is table body. -->
-                    <tr class="table-primary">
-                        <th>101</th>
-                        <th>John Watson</th>
-                        <th>john@gmail.com</th>
-                        <th>1200000</th>
-                        <th>Employee</th>
-                        <th>
-                            <button id="add_project" class="btn btn-secondary">EDIT</button><br>
-                            <br>
-                            <button id="add_project" class="btn btn-danger">REMOVE</button><br>
-                        </th>
-                    </tr>
+                    {% for member, details in members.items %}
+                        <tr class="table-primary">
+                           <td>{{member}}</td>
+                           {% for detail in details %}
+                               <td>{{detail}}</td>
+                           {% endfor %}
+                        </tr>
+                    {% endfor %}
                 </tbody>
             </table>
         </div>
