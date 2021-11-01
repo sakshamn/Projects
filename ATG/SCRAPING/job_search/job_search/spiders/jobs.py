@@ -26,7 +26,6 @@ class JobsSpider(scrapy.Spider):
     #allowed_domains = [
     #    'www.careerguide.com/career-options',
     #     "https://in.linkedin.com/jobs/search?keywords=&location=New%20Delhi%2C%20Delhi%2C%20India&geoId=&trk=homepage-jobseeker_jobs-search-bar_search-submit&position=1&pageNum=0"
-    #    'www.linkedin.com/jobs/search?keywords=&location=New%20Delhi%2C%20Delhi%2C%20India&geoId=&trk=homepage-jobseeker_jobs-search-bar_search-submit&position=1&pageNum=0'
     #]
     start_urls = [
         'https://www.careerguide.com/career-options/',
@@ -58,6 +57,7 @@ class JobsSpider(scrapy.Spider):
         for link in links:
             print("Parsing the link:", link)
             yield scrapy.Request(link, callback=self.parse_link)
+    # def parse #
 
 
     def parse_link(self, response):
@@ -65,7 +65,6 @@ class JobsSpider(scrapy.Spider):
             self.logger.error("Couldn't Crawl Website!")
             return None    # Couldn't crawl webpage #
 
-        print("NSAK0")
         title = response.css("title::text").get()
         body = response.body
 
@@ -73,7 +72,7 @@ class JobsSpider(scrapy.Spider):
 
         print(body)
         #print(table)
+    # def parse_link #
 
 # class JobsSpider # 
-
 
